@@ -1,4 +1,5 @@
 import 'package:faker/faker.dart';
+import 'package:flutter_tdd_bdd_solid_clean_arch/domain/usecases/usecases.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -8,8 +9,10 @@ class RemoteAuthentication {
 
   RemoteAuthentication({required this.httpClient, required this.url});
 
-  Future<void> auth() async {
-    await httpClient.request(url: url, method: 'post');
+  Future<void> auth(AuthenticationParams params) async {
+    final body = {'email': params.email, 'password': params.secret};
+
+    await httpClient.request(url: url, method: 'post', body: body);
   }
 }
 
@@ -17,6 +20,7 @@ abstract class HttpClient {
   Future<void> request({
     required String url,
     required String method,
+    Map body,
   });
 }
 
@@ -41,15 +45,27 @@ void main() {
         () => httpClient.request(
           url: any(named: 'url'),
           method: any(named: 'method'),
+          body: any(named: 'body'),
         ),
       ).thenAnswer((_) async {
         return;
       });
+      final paramns = AuthenticationParams(
+        email: faker.internet.email(),
+        secret: faker.internet.password(),
+      );
 
-      await sut.auth();
+      await sut.auth((paramns));
 
       verify(
-        () => httpClient.request(url: url, method: 'post'),
+        () => httpClient.request(
+          url: url,
+          method: 'post',
+          body: {
+            'email': paramns.email,
+            'password': paramns.secret,
+          },
+        ),
       );
     },
   );
