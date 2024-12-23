@@ -93,7 +93,7 @@ void main() {
           ));
     });
 
-    test('Should return data if post returns 200', () async {
+    test('Should return data if post returnss 200', () async {
       mockResponse(
         statusCode: 200,
         data: jsonEncode({'any_key': 'any_value'}),
@@ -104,8 +104,15 @@ void main() {
       expect(response, {'any_key': 'any_value'});
     });
 
-    test('Should return null if post return 200 with no data ', () async {
+    test('Should return null if post returns 200 with no data', () async {
       mockResponse(statusCode: 200, data: '');
+
+      final response = await sut.request(url: url, method: 'post');
+
+      expect(response, null);
+    });
+    test('Should return null if post returns 204', () async {
+      mockResponse(statusCode: 204, data: '');
 
       final response = await sut.request(url: url, method: 'post');
 
