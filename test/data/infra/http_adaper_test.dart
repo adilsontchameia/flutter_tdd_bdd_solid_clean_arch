@@ -22,13 +22,17 @@ class HttpAdapter {
 }
 
 void main() {
+  late ClientSpy client;
+  late HttpAdapter sut;
+  late String url;
+  setUp(() {
+    client = ClientSpy();
+    sut = HttpAdapter(client);
+    url = faker.internet.httpUrl();
+  });
   //For post only
   group('post', () {
     test('Should call post with correct values', () async {
-      final client = ClientSpy();
-      final sut = HttpAdapter(client);
-      final url = faker.internet.httpUrl();
-
       when(() => client.post(url, options: any(named: 'options'))).thenAnswer(
         (_) async => Response(
           requestOptions: RequestOptions(path: url),
