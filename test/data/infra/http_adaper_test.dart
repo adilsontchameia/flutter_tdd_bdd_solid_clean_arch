@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,13 +13,19 @@ class HttpAdapter {
   Future<void> request({
     required String url,
     required String method,
-    Map body = const {},
+    Map data = const {},
   }) async {
     final headers = {
       'content-type': 'application/json',
       'accept': 'application/json',
     };
-    await _client.post(url, options: Options(headers: headers));
+    await _client.post(
+      url,
+      options: Options(
+        headers: headers,
+      ),
+      data: jsonEncode(data),
+    );
   }
 }
 
@@ -33,14 +41,24 @@ void main() {
   //For post only
   group('post', () {
     test('Should call post with correct values', () async {
-      when(() => client.post(url, options: any(named: 'options'))).thenAnswer(
+      when(
+        () => client.post(
+          url,
+          options: any(named: 'options'),
+          data: any(named: 'data'),
+        ),
+      ).thenAnswer(
         (_) async => Response(
           requestOptions: RequestOptions(path: url),
           statusCode: 200,
         ),
       );
 
-      await sut.request(url: url, method: 'post');
+      await sut.request(
+        url: url,
+        method: 'post',
+        data: {'any_key': 'any_value'},
+      );
 
       verifyNever(
         () => client.post(
@@ -51,6 +69,7 @@ void main() {
               'accept': 'application/json',
             },
           ),
+          data: {'any_key': 'any_value'},
         ),
       );
     });
