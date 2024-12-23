@@ -13,7 +13,7 @@ class HttpAdapter implements HttpClient {
   HttpAdapter(this._client);
 
   @override
-  Future<Map> request({
+  Future<Map?> request({
     required String url,
     required String method,
     Map? data,
@@ -30,8 +30,8 @@ class HttpAdapter implements HttpClient {
       data: jsonBody,
     );
 
-    if (response.data == null) {
-      return {};
+    if (response.data == null || response.data == '') {
+      return null;
     }
 
     return jsonDecode(response.data);
@@ -104,6 +104,22 @@ void main() {
 
       expect(response, {'any_key': 'any_value'});
     });
+    test('Should return null if post returns 200 with no data', () async {
+      when(
+        () => client.post(any(), options: any(named: 'options')),
+      ).thenAnswer(
+        (_) async => Response(
+          data: '',
+          requestOptions: RequestOptions(path: url),
+          statusCode: 200,
+        ),
+      );
+
+      final response = await sut.request(url: url, method: 'post');
+
+      expect(response, null);
+    });
+
     test('Should return empty map if response data is null', () async {
       when(
         () => client.post(any(), options: any(named: 'options')),
