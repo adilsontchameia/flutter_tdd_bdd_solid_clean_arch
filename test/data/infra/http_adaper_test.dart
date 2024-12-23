@@ -13,7 +13,11 @@ class HttpAdapter {
     required String method,
     Map body = const {},
   }) async {
-    await _client.post(url);
+    final headers = {
+      'content-type': 'application/json',
+      'accept': 'application/json',
+    };
+    await _client.post(url, options: Options(headers: headers));
   }
 }
 
@@ -25,7 +29,7 @@ void main() {
       final sut = HttpAdapter(client);
       final url = faker.internet.httpUrl();
 
-      when(() => client.post(url)).thenAnswer(
+      when(() => client.post(url, options: any(named: 'options'))).thenAnswer(
         (_) async => Response(
           requestOptions: RequestOptions(path: url),
           statusCode: 200,
@@ -34,7 +38,17 @@ void main() {
 
       await sut.request(url: url, method: 'post');
 
-      verify(() => client.post(url)).called(1);
+      verifyNever(
+        () => client.post(
+          url,
+          options: Options(
+            headers: {
+              'content-type': 'application/json',
+              'accept': 'application/json',
+            },
+          ),
+        ),
+      );
     });
   });
 }
