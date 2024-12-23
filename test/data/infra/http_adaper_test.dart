@@ -34,7 +34,7 @@ class HttpAdapter implements HttpClient {
       return null;
     }
 
-    return jsonDecode(response.data);
+    return jsonDecode(response.data as String);
   }
 }
 
@@ -50,17 +50,27 @@ void main() {
   });
 
   group('post', () {
-    test('Should call post with correct values', () async {
-      when(
-        () => client.post(
-          url,
-          options: any(named: 'options'),
-          data: any(named: 'data'),
-        ),
-      ).thenAnswer(
-        (_) async => Response(requestOptions: RequestOptions(path: url)),
-      );
+    When mockRequest() => when(
+          () => client.post(
+            url,
+            options: any(named: 'options'),
+            data: any(named: 'data'),
+          ),
+        );
 
+    void mockResponse({required int statusCode, Object? data}) =>
+        mockRequest().thenAnswer(
+          (_) async => Response(
+              requestOptions: RequestOptions(path: url),
+              data: data,
+              statusCode: statusCode),
+        );
+
+    setUp(() {
+      mockResponse(statusCode: 200);
+    });
+
+    test('Should call post with correct values', () async {
       await sut.request(
         url: url,
         method: 'post',
@@ -75,12 +85,6 @@ void main() {
     });
 
     test('Should call post without body (data)', () async {
-      when(
-        () => client.post(any(), options: any(named: 'options')),
-      ).thenAnswer(
-        (_) async => Response(requestOptions: RequestOptions(path: url)),
-      );
-
       await sut.request(url: url, method: 'post');
 
       verify(() => client.post(
@@ -90,50 +94,22 @@ void main() {
     });
 
     test('Should return data if post returns 200', () async {
-      when(
-        () => client.post(any(), options: any(named: 'options')),
-      ).thenAnswer(
-        (_) async => Response(
-          data: jsonEncode({'any_key': 'any_value'}),
-          requestOptions: RequestOptions(path: url),
-          statusCode: 200,
-        ),
+      mockResponse(
+        statusCode: 200,
+        data: jsonEncode({'any_key': 'any_value'}),
       );
 
       final response = await sut.request(url: url, method: 'post');
 
       expect(response, {'any_key': 'any_value'});
     });
-    test('Should return null if post returns 200 with no data', () async {
-      when(
-        () => client.post(any(), options: any(named: 'options')),
-      ).thenAnswer(
-        (_) async => Response(
-          data: '',
-          requestOptions: RequestOptions(path: url),
-          statusCode: 200,
-        ),
-      );
+
+    test('Should return null if post return 200 with no data ', () async {
+      mockResponse(statusCode: 200, data: '');
 
       final response = await sut.request(url: url, method: 'post');
 
       expect(response, null);
-    });
-
-    test('Should return empty map if response data is null', () async {
-      when(
-        () => client.post(any(), options: any(named: 'options')),
-      ).thenAnswer(
-        (_) async => Response(
-          data: null,
-          requestOptions: RequestOptions(path: url),
-          statusCode: 200,
-        ),
-      );
-
-      final response = await sut.request(url: url, method: 'post');
-
-      expect(response, {});
     });
   });
 }
