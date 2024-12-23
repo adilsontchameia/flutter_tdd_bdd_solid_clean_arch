@@ -2,15 +2,18 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:faker/faker.dart';
+import 'package:flutter_tdd_bdd_solid_clean_arch/data/http/http_client.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 class ClientSpy extends Mock implements Dio {}
 
-class HttpAdapter {
+class HttpAdapter implements HttpClient {
   final Dio _client;
   HttpAdapter(this._client);
-  Future<void> request({
+
+  @override
+  Future<Map> request({
     required String url,
     required String method,
     Map? data,
@@ -19,14 +22,19 @@ class HttpAdapter {
       'content-type': 'application/json',
       'accept': 'application/json',
     };
+
     final jsonBody = data != null ? jsonEncode(data) : null;
-    await _client.post(
+    final response = await _client.post(
       url,
-      options: Options(
-        headers: headers,
-      ),
+      options: Options(headers: headers),
       data: jsonBody,
     );
+
+    if (response.data == null) {
+      return {};
+    }
+
+    return jsonDecode(response.data);
   }
 }
 
@@ -34,12 +42,13 @@ void main() {
   late ClientSpy client;
   late HttpAdapter sut;
   late String url;
+
   setUp(() {
     client = ClientSpy();
     sut = HttpAdapter(client);
     url = faker.internet.httpUrl();
   });
-  //For post only
+
   group('post', () {
     test('Should call post with correct values', () async {
       when(
@@ -49,10 +58,7 @@ void main() {
           data: any(named: 'data'),
         ),
       ).thenAnswer(
-        (_) async => Response(
-          requestOptions: RequestOptions(path: url),
-          statusCode: 200,
-        ),
+        (_) async => Response(requestOptions: RequestOptions(path: url)),
       );
 
       await sut.request(
@@ -61,39 +67,57 @@ void main() {
         data: {'any_key': 'any_value'},
       );
 
-      verifyNever(
-        () => client.post(
-          url,
-          options: Options(
-            headers: {
-              'content-type': 'application/json',
-              'accept': 'application/json',
-            },
-          ),
-          data: {'any_key': 'any_value'},
-        ),
-      );
+      verify(() => client.post(
+            url,
+            options: any(named: 'options'),
+            data: jsonEncode({'any_key': 'any_value'}),
+          ));
     });
 
     test('Should call post without body (data)', () async {
       when(
         () => client.post(any(), options: any(named: 'options')),
       ).thenAnswer(
+        (_) async => Response(requestOptions: RequestOptions(path: url)),
+      );
+
+      await sut.request(url: url, method: 'post');
+
+      verify(() => client.post(
+            any(),
+            options: any(named: 'options'),
+          ));
+    });
+
+    test('Should return data if post returns 200', () async {
+      when(
+        () => client.post(any(), options: any(named: 'options')),
+      ).thenAnswer(
         (_) async => Response(
+          data: jsonEncode({'any_key': 'any_value'}),
           requestOptions: RequestOptions(path: url),
           statusCode: 200,
         ),
       );
 
-      await sut.request(url: url, method: 'post');
+      final response = await sut.request(url: url, method: 'post');
 
-      verifyNever(
-        () => client.post(url,
-            options: Options(headers: {
-              'content-type': 'application/json',
-              'accept': 'application/json',
-            })),
+      expect(response, {'any_key': 'any_value'});
+    });
+    test('Should return empty map if response data is null', () async {
+      when(
+        () => client.post(any(), options: any(named: 'options')),
+      ).thenAnswer(
+        (_) async => Response(
+          data: null,
+          requestOptions: RequestOptions(path: url),
+          statusCode: 200,
+        ),
       );
+
+      final response = await sut.request(url: url, method: 'post');
+
+      expect(response, {});
     });
   });
 }
