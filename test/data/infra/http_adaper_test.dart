@@ -107,13 +107,23 @@ void main() {
       );
     });
 
-    test('Should return BadRequestError if post returns 400', () async {
+    test('Should return BadRequestError if post returns 400 witout data',
+        () async {
       mockResponse(statusCode: 400, data: '');
 
       expect(
         () async => await sut.request(url: url, method: 'post'),
         throwsA(
             isA<HttpError>().having((e) => e, 'type', HttpError.badRequest)),
+      );
+    });
+    test('Should return ServerError if post returns 500 witout data', () async {
+      mockResponse(statusCode: 500);
+
+      expect(
+        () async => await sut.request(url: url, method: 'post'),
+        throwsA(
+            isA<HttpError>().having((e) => e, 'type', HttpError.serverError)),
       );
     });
   });
