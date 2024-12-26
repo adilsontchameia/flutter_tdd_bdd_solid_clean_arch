@@ -106,5 +106,15 @@ void main() {
             isA<HttpError>().having((e) => e, 'type', HttpError.badRequest)),
       );
     });
+
+    test('Should return BadRequestError if post returns 400', () async {
+      mockResponse(statusCode: 400, data: '');
+
+      expect(
+        () async => await sut.request(url: url, method: 'post'),
+        throwsA(
+            isA<HttpError>().having((e) => e, 'type', HttpError.badRequest)),
+      );
+    });
   });
 }
