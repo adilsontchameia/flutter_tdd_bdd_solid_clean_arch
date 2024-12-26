@@ -37,7 +37,7 @@ void main() {
             statusCode: statusCode,
           ),
         );
-
+    void mockError() => mockRequest().thenThrow((_) async => Exception());
     setUp(() {
       mockResponse(statusCode: 200);
     });
@@ -151,9 +151,18 @@ void main() {
             isA<HttpError>().having((e) => e, 'type', HttpError.serverError)),
       );
     });
+    test('Should return ServerError if post throws', () async {
+      mockError();
+
+      expect(
+        () async => await sut.request(url: url, method: 'post'),
+        throwsA(
+            isA<HttpError>().having((e) => e, 'type', HttpError.serverError)),
+      );
+    });
   });
   group('shared', () {
-    test('Should throw server error if invalid method is provided', () async {
+    test('Should throw ServerError if invalid method is provided', () async {
       expect(
         () async => await sut.request(url: url, method: 'invalid_method'),
         throwsA(
