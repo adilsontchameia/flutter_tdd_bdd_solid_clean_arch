@@ -117,6 +117,16 @@ void main() {
             isA<HttpError>().having((e) => e, 'type', HttpError.badRequest)),
       );
     });
+    test('Should return UnAuthorisedError if post returns 401', () async {
+      mockResponse(statusCode: 401);
+
+      expect(
+        () async => await sut.request(url: url, method: 'post'),
+        throwsA(
+            isA<HttpError>().having((e) => e, 'type', HttpError.unAuthorised)),
+      );
+    });
+
     test('Should return ServerError if post returns 500 witout data', () async {
       mockResponse(statusCode: 500);
 
