@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:faker/faker.dart';
+import 'package:flutter_tdd_bdd_solid_clean_arch/data/http/http.dart';
 import 'package:flutter_tdd_bdd_solid_clean_arch/infra/infra.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -56,7 +57,7 @@ void main() {
     });
 
     test('Should call post without body (data)', () async {
-      await sut.request(url: url, method: 'post');
+      await sut.request(url: url, method: 'get');
 
       verify(() => client.post(
             any(),
@@ -95,6 +96,15 @@ void main() {
       final response = await sut.request(url: url, method: 'post');
 
       expect(response, null);
+    });
+    test('Should return BadRequestError if post returns 400', () async {
+      mockResponse(statusCode: 400);
+
+      expect(
+        () async => await sut.request(url: url, method: 'post'),
+        throwsA(
+            isA<HttpError>().having((e) => e, 'type', HttpError.badRequest)),
+      );
     });
   });
 }

@@ -5,8 +5,8 @@ import 'package:dio/dio.dart';
 import '../data/http/http.dart';
 
 class HttpAdapter implements HttpClient {
-  final Dio _client;
-  HttpAdapter(this._client);
+  final Dio client;
+  HttpAdapter(this.client);
 
   @override
   Future<Map?> request({
@@ -20,23 +20,32 @@ class HttpAdapter implements HttpClient {
     };
 
     final jsonBody = data != null ? jsonEncode(data) : null;
-    final response = await _client.post(
-      url,
-      options: Options(headers: headers),
-      data: jsonBody,
-    );
 
-    if (response.data == null || response.data == '') {
-      return null;
+    try {
+      final response = await client.post(
+        url,
+        options: Options(headers: headers),
+        data: jsonBody,
+      );
+
+      return _handleResponse(response);
+    } catch (error) {
+      rethrow;
     }
-    return _handleResponse(response);
   }
 
   Map? _handleResponse(Response response) {
     if (response.statusCode == 200) {
+      if (response.data == null || response.data.toString().isEmpty) {
+        return null;
+      }
       return jsonDecode(response.data);
-    } else {
+    } else if (response.statusCode == 204) {
       return null;
+    } else if (response.statusCode == 400) {
+      throw HttpError.badRequest;
+    } else {
+      throw HttpError.serverError;
     }
   }
 }
