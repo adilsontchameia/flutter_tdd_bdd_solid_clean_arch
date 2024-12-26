@@ -20,18 +20,17 @@ class HttpAdapter implements HttpClient {
     };
 
     final jsonBody = data != null ? jsonEncode(data) : null;
+    var response = Response(requestOptions: RequestOptions(), statusCode: 500);
 
-    try {
-      final response = await client.post(
+    if (method == 'post') {
+      response = await client.post(
         url,
         options: Options(headers: headers),
         data: jsonBody,
       );
-
-      return _handleResponse(response);
-    } catch (error) {
-      rethrow;
     }
+
+    return _handleResponse(response);
   }
 
   Map? _handleResponse(Response response) {
@@ -46,6 +45,10 @@ class HttpAdapter implements HttpClient {
       throw HttpError.badRequest;
     } else if (response.statusCode == 401) {
       throw HttpError.unAuthorised;
+    } else if (response.statusCode == 403) {
+      throw HttpError.forbiden;
+    } else if (response.statusCode == 404) {
+      throw HttpError.notFound;
     } else {
       throw HttpError.serverError;
     }

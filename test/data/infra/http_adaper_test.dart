@@ -126,12 +126,36 @@ void main() {
             isA<HttpError>().having((e) => e, 'type', HttpError.unAuthorised)),
       );
     });
+    test('Should return ForbidenError if post returns 403', () async {
+      mockResponse(statusCode: 403);
 
+      expect(
+        () async => await sut.request(url: url, method: 'post'),
+        throwsA(isA<HttpError>().having((e) => e, 'type', HttpError.forbiden)),
+      );
+    });
+    test('Should return NotFoundError if post returns 404', () async {
+      mockResponse(statusCode: 404);
+
+      expect(
+        () async => await sut.request(url: url, method: 'post'),
+        throwsA(isA<HttpError>().having((e) => e, 'type', HttpError.notFound)),
+      );
+    });
     test('Should return ServerError if post returns 500 witout data', () async {
       mockResponse(statusCode: 500);
 
       expect(
         () async => await sut.request(url: url, method: 'post'),
+        throwsA(
+            isA<HttpError>().having((e) => e, 'type', HttpError.serverError)),
+      );
+    });
+  });
+  group('shared', () {
+    test('Should throw server error if invalid method is provided', () async {
+      expect(
+        () async => await sut.request(url: url, method: 'invalid_method'),
         throwsA(
             isA<HttpError>().having((e) => e, 'type', HttpError.serverError)),
       );
