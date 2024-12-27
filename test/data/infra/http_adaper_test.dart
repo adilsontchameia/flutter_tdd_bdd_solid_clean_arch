@@ -166,7 +166,8 @@ void main() {
       expect(
         () async => await sut.request(url: url, method: 'invalid_method'),
         throwsA(
-            isA<HttpError>().having((e) => e, 'type', HttpError.serverError)),
+          isA<HttpError>().having((e) => e, 'type', HttpError.serverError),
+        ),
       );
     });
   });
