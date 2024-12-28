@@ -22,7 +22,7 @@ void main() {
   When mockRequest() => when(() => httpClient.request(
         url: any(named: 'url'),
         method: any(named: 'method'),
-        data: any(named: 'body'),
+        data: any(named: 'data'),
       ));
   void mockHttpData(Map data) {
     mockRequest().thenAnswer((_) async => data);

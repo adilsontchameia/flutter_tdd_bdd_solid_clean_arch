@@ -57,12 +57,14 @@ void main() {
     });
 
     test('Should call post without body (data)', () async {
-      await sut.request(url: url, method: 'get');
+      await sut.request(url: url, method: 'post');
 
-      verify(() => client.post(
-            any(),
-            options: any(named: 'options'),
-          ));
+      verify(
+        () => client.post(
+          any(),
+          options: any(named: 'options'),
+        ),
+      );
     });
 
     test('Should return data if post returnss 200', () async {
